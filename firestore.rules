@@ -40,15 +40,6 @@ service cloud.firestore {
       allow read: if sameStore(resource.data.storeId) &&
         (isAdmin() || isOwner(resource.data.uid));
       allow create, update: if isAdminOfStore(resource.data.storeId);
-
-      match /auditLog/{logId} {
-        allow read: if sameStore(
-          get(/databases/$(database)/documents/shifts/$(shiftId)).data.storeId
-        );
-        allow create: if isAdminOfStore(
-          get(/databases/$(database)/documents/shifts/$(shiftId)).data.storeId
-        );
-      }
     }
 
     // ─── leavePolicy ───
