@@ -35,7 +35,7 @@ export default function LoginPage() {
             alignItems: 'center',
             justifyContent: 'center',
             padding: 'var(--space-md)',
-            background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1040 50%, #0f0f1a 100%)',
+            background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 50%, #f5f3ff 100%)',
         }}>
             <div style={{ width: '100%', maxWidth: 400 }}>
                 <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
@@ -46,9 +46,7 @@ export default function LoginPage() {
                     <h1 style={{
                         fontSize: 'var(--font-size-2xl)',
                         fontWeight: 800,
-                        background: 'linear-gradient(135deg, #818cf8, #a78bfa)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
+                        color: 'var(--color-primary)',
                     }}>연차 관리</h1>
                     <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-sm)', marginTop: 4 }}>
                         알바 유급휴가 관리 시스템
