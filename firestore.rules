@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper Functions ───
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isAdmin() {
+      return isAuthenticated() && getUserData().role == 'admin';
+    }
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    function sameStore(storeId) {
+      return isAuthenticated() && getUserData().storeId == storeId;
+    }
+    function isAdminOfStore(storeId) {
+      return isAdmin() && sameStore(storeId);
+    }
+
+    // ─── users ───
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdminOfStore(resource.data.storeId);
+      allow create: if isAdmin();
+      allow update: if isAdminOfStore(resource.data.storeId);
+    }
+
+    // ─── stores ───
+    match /stores/{storeId} {
+      allow read: if sameStore(storeId);
+      allow write: if isAdminOfStore(storeId);
+    }
+
+    // ─── shifts ───
+    match /shifts/{shiftId} {
+      allow read: if sameStore(resource.data.storeId) &&
+        (isAdmin() || isOwner(resource.data.uid));
+      allow create, update: if isAdminOfStore(resource.data.storeId);
+
+      match /auditLog/{logId} {
+        allow read: if sameStore(
+          get(/databases/$(database)/documents/shifts/$(shiftId)).data.storeId
+        );
+        allow create: if isAdminOfStore(
+          get(/databases/$(database)/documents/shifts/$(shiftId)).data.storeId
+        );
+      }
+    }
+
+    // ─── leavePolicy ───
+    match /leavePolicy/{storeId} {
+      allow read: if sameStore(storeId);
+      allow write: if isAdminOfStore(storeId);
+    }
+
+    // ─── leaveLedger ───
+    match /leaveLedger/{ledgerId} {
+      allow read: if sameStore(resource.data.storeId) &&
+        (isAdmin() || isOwner(resource.data.uid));
+      allow create: if isAdminOfStore(resource.data.storeId) ||
+        (isOwner(resource.data.uid) && resource.data.type == 'use');
+    }
+
+    // ─── leaveRequests ───
+    match /leaveRequests/{requestId} {
+      allow read: if sameStore(resource.data.storeId) &&
+        (isAdmin() || isOwner(resource.data.uid));
+      allow create: if isOwner(request.resource.data.uid) &&
+        sameStore(request.resource.data.storeId);
+      allow update: if isAdminOfStore(resource.data.storeId) ||
+        (isOwner(resource.data.uid) &&
+         resource.data.status == 'requested' &&
+         request.resource.data.status == 'canceled');
+    }
+
+    // ─── payrollExports ───
+    match /payrollExports/{exportId} {
+      allow read, write: if isAdminOfStore(resource.data.storeId);
+    }
+  }
+}
